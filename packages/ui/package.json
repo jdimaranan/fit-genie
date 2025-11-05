@@ -1,5 +1,5 @@
 {
-  "name": "@repo/ui",
+  "name": "@fitgenie/ui",
   "version": "1.0.0",
   "main": "./index.tsx",
   "types": "./index.tsx",
@@ -14,8 +14,8 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "@repo/eslint-config": "*",
-    "@repo/typescript-config": "*",
+    "@fitgenie/eslint-config": "*",
+    "@fitgenie/typescript-config": "*",
     "eslint": "^9.8.0",
     "typescript": "5.4.5"
   },
