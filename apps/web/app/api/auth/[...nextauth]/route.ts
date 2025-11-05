@@ -1,6 +1,9 @@
 import NextAuth, { NextAuthOptions } from "next-auth";
+import { PrismaClient } from "@prisma/client";
 import GoogleProvider from "next-auth/providers/google";
 import FacebookProvider from "next-auth/providers/facebook";
+
+const prisma = new PrismaClient();
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -21,6 +24,24 @@ export const authOptions: NextAuthOptions = {
     strategy: "jwt",
   },
   callbacks: {
+    async signIn({ user }) {
+      const existingUser = await prisma.user.findUnique({
+        where: { email: user.email ?? "" },
+      });
+
+      if (!existingUser) {
+        await prisma.user.create({
+          data: {
+            name: user.name ?? "",
+            email: user.email ?? "",
+            image: user.image ?? "",
+            onboardingCompleted: false,
+          },
+        });
+      }
+
+      return true;
+    },
     async jwt({ token, account }) {
       if (account) {
         token.accessToken = account.access_token;
@@ -29,10 +50,19 @@ export const authOptions: NextAuthOptions = {
     },
     async session({ session, token }) {
       (session as any).accessToken = token.accessToken;
+      if (session.user?.email) {
+        const dbUser = await prisma.user.findUnique({
+          where: { email: session.user.email },
+          select: { id: true, onboardingCompleted: true },
+        });
+        (session.user as any).id = dbUser?.id;
+        (session.user as any).onboardingCompleted = dbUser?.onboardingCompleted;
+      }
+
       return session;
     },
-    async redirect() {
-      return "/dashboard";
+    async redirect({ url, baseUrl }) {
+      return baseUrl; // we’ll handle redirect manually in the frontend
     },
   },
 };
